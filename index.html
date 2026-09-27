@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shed Material Calculator — NZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue-900:#0f2438;
+    --blue-800:#16324a;
+    --blue-700:#1f4562;
+    --line:#3d6180;
+    --paper:#eef3f6;
+    --paper-dim:#c7d6e0;
+    --tape:#e8823c;
+    --tape-dark:#c3661f;
+    --good:#7cc48f;
+    --radius:2px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){ }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--blue-900);
+    color:var(--paper);
+    font-family:'Archivo',sans-serif;
+    min-height:100%;
+    line-height:1.5;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:40px 20px 80px;}
+
+  header{margin-bottom:36px;border-bottom:1px solid var(--line);padding-bottom:24px;}
+  .kicker{font-family:'Space Mono',monospace;font-size:13px;color:var(--tape);letter-spacing:.02em;margin:0 0 10px;}
+  h1{font-size:clamp(28px,5vw,42px);font-weight:800;margin:0 0 10px;line-height:1.1;letter-spacing:-0.01em;}
+  header p{max-width:60ch;color:var(--paper-dim);margin:0;font-size:15.5px;}
+
+  .panel{
+    background:rgba(238,243,246,0.04);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px;
+    margin-bottom:24px;
+  }
+  .panel h2{
+    font-size:15px;text-transform:uppercase;letter-spacing:.08em;
+    margin:0 0 20px;color:var(--tape);font-weight:700;
+    border-bottom:1px solid var(--line);padding-bottom:10px;
+  }
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;}
+  label{display:block;font-size:13px;color:var(--paper-dim);margin-bottom:7px;}
+  .unit{font-family:'Space Mono',monospace;color:var(--tape);font-size:12px;}
+  input[type=number], select{
+    width:100%;background:var(--blue-800);border:1px solid var(--line);
+    color:var(--paper);padding:11px 12px;border-radius:var(--radius);
+    font-family:'Space Mono',monospace;font-size:16px;
+  }
+  input[type=number]:focus, select:focus{outline:2px solid var(--tape);outline-offset:1px;}
+  select{appearance:none;background-image:linear-gradient(45deg, transparent 50%, var(--paper-dim) 50%),linear-gradient(135deg, var(--paper-dim) 50%, transparent 50%);background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+
+  .radio-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .radio-row label{
+    display:flex;align-items:center;gap:7px;background:var(--blue-800);
+    border:1px solid var(--line);padding:9px 13px;border-radius:var(--radius);
+    cursor:pointer;font-size:14px;color:var(--paper);flex:1;min-width:120px;margin-bottom:0;
+  }
+  .radio-row input{accent-color:var(--tape);}
+
+  button#calc{
+    margin-top:4px;
+    background:var(--tape);color:var(--blue-900);border:none;
+    font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;
+    padding:14px 26px;border-radius:var(--radius);cursor:pointer;width:100%;
+    letter-spacing:.01em;
+  }
+  button#calc:hover{background:var(--tape-dark);color:var(--paper);}
+  button#calc:focus-visible{outline:2px solid var(--paper);outline-offset:2px;}
+
+  #results{display:none;}
+  .summary{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:24px;border-radius:var(--radius);overflow:hidden;
+  }
+  .summary div{background:var(--blue-800);padding:16px;}
+  .summary .num{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--tape);}
+  .summary .lbl{font-size:12px;color:var(--paper-dim);margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+  th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--paper-dim);border-bottom:1px solid var(--line);padding:8px 10px;font-weight:600;
+  }
+  td{padding:10px 10px;border-bottom:1px solid rgba(61,97,128,0.4);font-size:14.5px;vertical-align:top;}
+  td.qty{font-family:'Space Mono',monospace;color:var(--tape);white-space:nowrap;font-weight:700;}
+  td.spec{color:var(--paper-dim);font-size:13px;}
+  .cat-title{font-weight:700;font-size:16px;margin:26px 0 4px;color:var(--paper);}
+  .cat-title:first-of-type{margin-top:0;}
+  .cat-note{font-size:12.5px;color:var(--paper-dim);margin:0 0 12px;}
+
+  .table-scroll{overflow-x:auto;}
+
+  .notes{
+    background:rgba(232,130,60,0.08);border:1px solid var(--tape-dark);
+    border-radius:var(--radius);padding:18px 20px;font-size:13.5px;color:var(--paper-dim);
+    margin-top:10px;
+  }
+  .notes strong{color:var(--paper);}
+  .notes ul{margin:8px 0 0;padding-left:18px;}
+  .notes li{margin-bottom:6px;}
+
+  footer{margin-top:40px;font-size:12.5px;color:var(--paper-dim);border-top:1px solid var(--line);padding-top:18px;}
+  a{color:var(--tape);}
+
+  @media (max-width:520px){
+    .wrap{padding:26px 14px 60px;}
+    .panel{padding:18px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="kicker">TIMBER SHED · MATERIAL ESTIMATOR · AOTEAROA NZ</p>
+    <h1>How much timber does your shed need?</h1>
+    <p>Enter the shed's outside dimensions and this works out a framing, cladding and roofing material list, sized against NZS 3604 timber-framed building spacings. No windows or doors assumed — a plain rectangular box.</p>
+  </header>
+
+  <div class="panel">
+    <h2>Shed dimensions</h2>
+    <div class="grid">
+      <div>
+        <label for="length">Length <span class="unit">m</span></label>
+        <input type="number" id="length" value="6" min="1" step="0.1">
+      </div>
+      <div>
+        <label for="width">Width <span class="unit">m</span></label>
+        <input type="number" id="width" value="4" min="1" step="0.1">
+      </div>
+      <div>
+        <label for="height">Wall height <span class="unit">m</span></label>
+        <input type="number" id="height" value="2.4" min="1.8" step="0.1">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Framing &amp; roof options</h2>
+    <div class="grid">
+      <div>
+        <label>Stud spacing (NZS 3604 std. centres)</label>
+        <div class="radio-row">
+          <label><input type="radio" name="studspace" value="600" checked> 600 mm</label>
+          <label><input type="radio" name="studspace" value="400"> 400 mm</label>
+        </div>
+      </div>
+      <div>
+        <label for="roof">Roof form</label>
+        <select id="roof">
+          <option value="skillion">Skillion (mono-pitch)</option>
+          <option value="gable">Gable</option>
+        </select>
+      </div>
+      <div>
+        <label for="pitch">Roof pitch <span class="unit">degrees</span></label>
+        <input type="number" id="pitch" value="10" min="3" max="45" step="1">
+      </div>
+      <div>
+        <label for="cladding">Wall cladding</label>
+        <select id="cladding">
+          <option value="ply">Structural plywood sheet</option>
+          <option value="weatherboard">Weatherboard (horizontal)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <button id="calc">Calculate materials</button>
+
+  <div id="results">
+
+    <div class="summary" id="summaryRow"></div>
+
+    <div class="panel">
+      <h2>Materials list</h2>
+      <div id="matList"></div>
+    </div>
+
+    <div class="notes" id="stdNotes"></div>
+  </div>
+
+  <footer>
+    Estimator only — for pricing and a rough cut list, not a consent document. Spans, treatment levels and bracing must be confirmed against <strong>NZS 3604:2011 Timber-framed buildings</strong> (or a producer statement from a Licensed Building Practitioner / engineer) before you build. Sheds under 10 m² used for ancillary storage may be exempt from building consent under <strong>Schedule 1 of the Building Act 2004</strong> — check current thresholds and any district plan rules with your local council before starting, as exemptions don't remove the requirement to meet the Building Code.
+  </footer>
+
+</div>
+
+<script>
+function calc(){
+  const L = parseFloat(document.getElementById('length').value)||0;
+  const W = parseFloat(document.getElementById('width').value)||0;
+  const H = parseFloat(document.getElementById('height').value)||0;
+  const studSpace = parseFloat(document.querySelector('input[name=studspace]:checked').value)/1000;
+  const roofType = document.getElementById('roof').value;
+  const pitchDeg = parseFloat(document.getElementById('pitch').value)||10;
+  const claddingType = document.getElementById('cladding').value;
+
+  if(L<=0||W<=0||H<=0){ alert('Enter length, width and wall height greater than zero.'); return; }
+
+  const perim = 2*(L+W);
+  const floorArea = L*W;
+  const wallArea = perim*H;
+  const pitchRad = pitchDeg*Math.PI/180;
+  const roofFactor = 1/Math.cos(pitchRad); // area multiplier for slope
+  const roofArea = floorArea*roofFactor*1.08; // +8% for eave overhang allowance
+
+  // ---- VOLUME: wall-height box + average roof-rise wedge ----
+  let roofRise;
+  if(roofType==='skillion'){
+    roofRise = W*Math.tan(pitchRad); // full rise across the width
+  } else {
+    roofRise = (W/2)*Math.tan(pitchRad); // rise to ridge from eave, gable
+  }
+  const volume = floorArea*H + floorArea*(roofRise/2); // box + average wedge under the roof
+
+  // ---- FOUNDATION: piles on ~1.8m grid, min 6 for a small shed ----
+  const pileSpacing = 1.8;
+  const pilesAlongL = Math.max(2, Math.ceil(L/pileSpacing)+1);
+  const pilesAlongW = Math.max(2, Math.ceil(W/pileSpacing)+1);
+  const pileCount = pilesAlongL*pilesAlongW;
+
+  // ---- FLOOR FRAMING ----
+  const bearerRuns = pilesAlongW; // bearer lines running along length, one per row of piles across width
+  const bearerLength = Math.ceil(bearerRuns * L);
+  const joistSpacing = 0.45;
+  const joistCount = Math.ceil(W/joistSpacing)+1;
+  const joistLength = joistCount * L;
+
+  // ---- WALL FRAMING ----
+  const bottomPlateLen = perim;
+  const topPlateLen = perim*2; // doubled top plate
+  const studsPerimeter = Math.ceil(perim/studSpace)+1;
+  const cornerStuds = 8; // 2 per corner x 4 corners
+  const totalStuds = studsPerimeter + cornerStuds;
+  const nogRows = Math.max(1, Math.floor(H/0.8)-1);
+  const totalNogs = nogRows * totalStuds;
+
+  // ---- ROOF FRAMING ----
+  const rafterSpacing = 0.6;
+  let rafterCount, rafterLength, purlinLength;
+  if(roofType==='skillion'){
+    rafterCount = Math.ceil(L/rafterSpacing)+1;
+    rafterLength = (W/Math.cos(pitchRad))+0.45; // + eave overhang
+    purlinLength = Math.ceil((rafterLength)/0.9)+1;
+    purlinLength = purlinLength * L;
+  } else {
+    rafterCount = (Math.ceil(L/rafterSpacing)+1)*2; // both sides of gable
+    rafterLength = ((W/2)/Math.cos(pitchRad))+0.45;
+    purlinLength = (Math.ceil((rafterLength)/0.9)+1)*2 * L;
+  }
+  const rafterTotalLength = rafterCount*rafterLength;
+
+  // ---- CLADDING ----
+  const sheetArea = 2.4*1.2; // standard ply sheet
+  const wallSheets = Math.ceil(wallArea/sheetArea*1.1); // +10% waste
+  const weatherboardLM = Math.ceil((wallArea/0.18)*1.1); // ~180mm cover boards, linear metres, +10% waste
+
+  // ---- ROOFING ----
+  const coverWidth = 0.76; // corrugate effective cover
+  const roofRunLength = roofType==='skillion' ? rafterLength : rafterLength;
+  const sheetsAcross = Math.ceil((roofType==='skillion'? L : L)/1) ; // placeholder unused
+  const roofSheetsCount = Math.ceil((L/coverWidth))*(roofType==='gable'?2:1);
+  const roofScrews = Math.ceil(roofArea*13);
+
+  // ---- FIXINGS (rough) ----
+  const framingNailsKg = Math.ceil((totalStuds+joistCount+rafterCount)*0.05);
+  const claddingFixingsCount = claddingType==='ply' ? wallSheets*24 : Math.ceil(weatherboardLM*2.2);
+
+  // ---------- RENDER ----------
+  const summary = document.getElementById('summaryRow');
+  summary.innerHTML = `
+    <div><div class="num">${floorArea.toFixed(1)} m²</div><div class="lbl">Floor area</div></div>
+    <div><div class="num">${wallArea.toFixed(1)} m²</div><div class="lbl">Wall area</div></div>
+    <div><div class="num">${roofArea.toFixed(1)} m²</div><div class="lbl">Roof area</div></div>
+    <div><div class="num">${volume.toFixed(1)} m³</div><div class="lbl">Internal volume</div></div>
+    <div><div class="num">${pileCount}</div><div class="lbl">Foundation piles</div></div>
+  `;
+
+  function section(title, note, rows){
+    let html = `<div class="cat-title">${title}</div>`;
+    if(note) html += `<p class="cat-note">${note}</p>`;
+    html += `<div class="table-scroll"><table><thead><tr><th>Qty</th><th>Item</th><th>Spec</th></tr></thead><tbody>`;
+    rows.forEach(r=>{
+      html += `<tr><td class="qty">${r[0]}</td><td>${r[1]}</td><td class="spec">${r[2]}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
+  let out = '';
+
+  out += section('Foundation', `Pile grid at roughly ${pileSpacing} m centres both ways — tighten spacing on soft ground.`, [
+    [pileCount, 'Timber piles', 'H5 treated, min. 100x100mm, per NZS 3604 foundation tables'],
+    [pileCount, 'Pile footings', '300x300x100mm concrete pads (or per site-specific ground conditions)'],
+  ]);
+
+  out += section('Floor framing', `Joists at 450mm centres, bearers along ${bearerRuns} pile rows.`, [
+    [`${bearerLength.toFixed(0)} lm`, 'Bearers', '140x45mm H3.2 treated'],
+    [`${joistCount} pcs / ${joistLength.toFixed(0)} lm`, 'Floor joists', '140x45mm H3.2 treated, 450mm crs'],
+    [`${floorArea.toFixed(1)} m²`, 'Flooring', '20mm H3.2 treated plywood or particleboard flooring sheet'],
+  ]);
+
+  out += section('Wall framing', `Studs at ${(studSpace*1000).toFixed(0)}mm centres plus corner studs; nog rows at ~800mm vertical centres.`, [
+    [`${bottomPlateLen.toFixed(1)} lm`, 'Bottom plate', '90x45mm H3.2 treated (in contact with floor)'],
+    [`${topPlateLen.toFixed(1)} lm`, 'Top plate (doubled)', '90x45mm SG8, untreated ok if fully enclosed'],
+    [totalStuds, 'Wall studs', `90x45mm SG8, ${H.toFixed(1)}m length`],
+    [totalNogs, 'Nogs / dwangs', `90x45mm SG8, ${nogRows} row(s) per wall run`],
+  ]);
+
+  out += section('Roof framing', roofType==='skillion' ? 'Single-slope skillion roof, falling across the width.' : 'Gable roof, ridge along the length.', [
+    [`${rafterCount} pcs / ${rafterTotalLength.toFixed(0)} lm`, roofType==='skillion'?'Rafters':'Rafters (both sides)', `140x45mm SG8, ${rafterLength.toFixed(2)}m length incl. eave`],
+    [`${purlinLength.toFixed(0)} lm`, 'Purlins', '90x45mm SG8 at 900mm centres across rafters'],
+  ]);
+
+  out += section('Wall cladding', claddingType==='ply' ? '2400x1200mm sheets, 10% allowance for cutting waste.' : 'Horizontal boards with ~180mm cover, 10% waste allowance.', claddingType==='ply' ? [
+    [wallSheets, 'Structural plywood sheets', '2400x1200x12mm, H3.1 treated, CD grade or similar'],
+    ['1 roll', 'Building wrap (wall underlay)', 'Flexible wall underlay to NZS 4200'],
+  ] : [
+    [`${weatherboardLM} lm`, 'Weatherboards', '180mm bevel-back or similar profile, H3.1 treated'],
+    ['1 roll', 'Building wrap (wall underlay)', 'Flexible wall underlay to NZS 4200'],
+  ]);
+
+  out += section('Roofing', `${roofArea.toFixed(1)} m² covered, corrugated steel sheet with ~${coverWidth*1000}mm effective cover.`, [
+    [roofSheetsCount, 'Corrugated roofing sheets', `Length to suit run (~${roofRunLength.toFixed(2)}m), 0.4-0.55mm steel`],
+    [Math.ceil(roofSheetsCount*0.15)+' pcs', 'Ridge / flashing capping', roofType==='gable' ? 'Ridge cap for gable apex' : 'Barge and apron flashings'],
+    [roofScrews, 'Roofing screws', 'Self-drilling, EPDM-washered, ~13 per m²'],
+  ]);
+
+  out += section('Fixings &amp; fasteners', 'Rough allowance — buy to nearest box size.', [
+    [`${framingNailsKg} kg`, 'Framing nails', '90mm galvanised jolt-head, hand or gun'],
+    [claddingFixingsCount, 'Cladding fixings', claddingType==='ply' ? 'Galvanised jolt-head or screw fixings' : 'Galvanised nails, 2 per board per stud'],
+    ['4 sets', 'Bracket/tie-down hardware', 'Cyclone/hurricane ties or proprietary brackets at rafter-to-wall and wall-to-floor junctions'],
+  ]);
+
+  document.getElementById('matList').innerHTML = out;
+
+  document.getElementById('stdNotes').innerHTML = `
+    <strong>Reading this against NZS 3604:2011</strong>
+    <ul>
+      <li>Stud, plate, joist, rafter and purlin sizes above are typical light-duty shed sizings — actual required sizes depend on your wind zone, snow loading and roof span, and should be checked against the relevant NZS 3604 span tables.</li>
+      <li>Timber in contact with the ground or a concrete floor, and all exterior cladding-side framing, generally needs H3.1/H3.2 treatment; framing fully enclosed and dry can often stay untreated SG8 — confirm treatment levels with your timber supplier.</li>
+      <li>Foundation piles and any embedded timber typically need H5 treatment per NZS 3640.</li>
+      <li>This tool assumes a plain rectangular shed with no door or window openings. Add trimmers, lintels and extra studs around any opening you introduce.</li>
+    </ul>
+  `;
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+document.getElementById('calc').addEventListener('click', calc);
+</script>
+</body>
+</html>
